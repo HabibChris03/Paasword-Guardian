@@ -12,6 +12,7 @@ import { Typography, Spacing, Radius, Shadows, CategoryColors, CategoryIcons } f
 import { validateCredentialForm, type CredentialValidationErrors } from '../../src/utils/validation';
 import { faviconUrl } from '../../src/utils/format';
 import type { CredentialCategory } from '../../src/types/models';
+import TotpService from '../../src/crypto/totp-service';
 
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import PasswordStrengthMeter from '../../components/ui/PasswordStrengthMeter';
@@ -49,6 +50,7 @@ export default function AddCredentialScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [notes, setNotes] = useState('');
+  const [totpSecret, setTotpSecret] = useState('');
   const [category, setCategory] = useState<CredentialCategory>('other');
 
   const [errors, setErrors] = useState<CredentialValidationErrors>({});
@@ -71,6 +73,11 @@ export default function AddCredentialScreen() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    if (totpSecret.trim() && !TotpService.isValidSecret(totpSecret.trim())) {
+      Alert.alert('Invalid 2FA Secret', 'The authenticator key must be a valid Base32 string (letters A-Z and digits 2-7).');
+      return;
+    }
+
     if (!vaultKey) {
       Alert.alert('Error', 'Vault is locked. Please unlock first.');
       return;
@@ -85,6 +92,7 @@ export default function AddCredentialScreen() {
           username,
           password,
           notes,
+          totpSecret: totpSecret.trim() || undefined,
           categoryId: category,
           tags: [],
         },
@@ -251,6 +259,31 @@ export default function AddCredentialScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+          </View>
+
+          {/* 2FA / TOTP Authenticator Key */}
+          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }, Shadows.sm]}>
+            <View style={styles.inputGroup}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: 4 }}>
+                <Ionicons name="shield-checkmark-outline" size={16} color={C.primary} />
+                <Text style={[styles.label, { color: C.textSecondary, marginBottom: 0 }]}>2FA / Authenticator Key (Optional)</Text>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  { color: C.text, borderColor: C.border, backgroundColor: C.surfaceSecondary },
+                ]}
+                placeholder="e.g. JBSWY3DPEHPK3PXP"
+                placeholderTextColor={C.textTertiary}
+                value={totpSecret}
+                onChangeText={setTotpSecret}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+              <Text style={{ fontSize: Typography.size.xs, color: C.textTertiary, marginTop: 4 }}>
+                Enter the setup key provided by the website to generate 6-digit verification codes.
+              </Text>
             </View>
           </View>
 

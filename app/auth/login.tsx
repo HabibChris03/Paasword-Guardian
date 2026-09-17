@@ -6,7 +6,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Animated, Vibration, TouchableOpacity,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -36,8 +36,24 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownSeconds(prev => {
+        if (prev <= 1) {
+          setError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
 
   const shake = useCallback(() => {
     Vibration.vibrate(50);
@@ -54,6 +70,8 @@ export default function LoginScreen() {
     setError('');
     const result = await AuthService.unlockWithBiometrics('Scan fingerprint to unlock Password Guardian');
     if (result.success && result.vaultKey) {
+      setAttempts(0);
+      setCooldownSeconds(0);
       unlock(result.vaultKey);
       router.replace('/(tabs)');
     } else if (result.error && !result.error.toLowerCase().includes('cancel')) {
@@ -98,6 +116,8 @@ export default function LoginScreen() {
   }, [isExplicitLogout, handleBiometric]);
 
   const handlePasswordUnlock = useCallback(async () => {
+    if (cooldownSeconds > 0) return;
+
     if (!password.trim()) {
       setError('Please enter your master password.');
       shake();
@@ -108,15 +128,42 @@ export default function LoginScreen() {
     const result = await AuthService.unlockWithPassword(password);
     setLoading(false);
     if (result.success && result.vaultKey) {
+      setAttempts(0);
+      setCooldownSeconds(0);
       unlock(result.vaultKey);
       router.replace('/(tabs)');
     } else {
-      setAttempts(a => a + 1);
-      setError(result.error ?? 'Incorrect password.');
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
       setPassword('');
       shake();
+
+      const settings = await SettingsService.getSettings();
+      // Check emergency auto-wipe
+      if (settings.autoWipeOnFailedAttempts && nextAttempts >= 10) {
+        await AuthService.deleteVault();
+        Alert.alert(
+          'Security Triggered: Vault Erased',
+          'Maximum failed password attempts (10) reached. For security, all local vault data has been erased.',
+          [{ text: 'OK', onPress: () => router.replace('/getstarted') }]
+        );
+        return;
+      }
+
+      if (nextAttempts >= 10) {
+        setCooldownSeconds(300);
+        setError('Too many failed attempts. Locked out for 5 minutes.');
+      } else if (nextAttempts >= 7) {
+        setCooldownSeconds(60);
+        setError('Too many failed attempts. Locked out for 1 minute.');
+      } else if (nextAttempts >= 5) {
+        setCooldownSeconds(30);
+        setError('Multiple failed attempts. Locked out for 30 seconds.');
+      } else {
+        setError(result.error ?? 'Incorrect password.');
+      }
     }
-  }, [password, unlock, router, shake]);
+  }, [password, unlock, router, shake, attempts, cooldownSeconds]);
 
   return (
     <KeyboardAvoidingView
@@ -188,15 +235,16 @@ export default function LoginScreen() {
               <Animated.View style={[styles.form, { transform: [{ translateX: shakeAnim }] }]}>
                 <PasswordInput
                   label="Master Password"
-                  placeholder="Enter your master password"
+                  placeholder={cooldownSeconds > 0 ? `Locked for ${cooldownSeconds}s` : 'Enter your master password'}
                   value={password}
                   onChangeText={text => { setPassword(text); setError(''); }}
                   error={error}
                   returnKeyType="done"
                   onSubmitEditing={handlePasswordUnlock}
+                  editable={cooldownSeconds === 0}
                   leftIcon={<Ionicons name="lock-closed-outline" size={18} color={C.textTertiary} />}
                 />
-                {attempts >= 3 && (
+                {attempts >= 3 && cooldownSeconds === 0 && (
                   <View style={[styles.warningBox, { backgroundColor: C.warningLight, borderRadius: Radius.md }]}>
                     <Ionicons name="warning-outline" size={16} color={C.warning} />
                     <Text style={[styles.warningText, { color: C.warning }]}>
@@ -204,14 +252,23 @@ export default function LoginScreen() {
                     </Text>
                   </View>
                 )}
+                {cooldownSeconds > 0 && (
+                  <View style={[styles.warningBox, { backgroundColor: C.dangerLight, borderRadius: Radius.md }]}>
+                    <Ionicons name="time-outline" size={16} color={C.danger} />
+                    <Text style={[styles.warningText, { color: C.danger }]}>
+                      Too many failed attempts. Try again in {cooldownSeconds}s.
+                    </Text>
+                  </View>
+                )}
               </Animated.View>
 
               <View style={styles.actions}>
                 <PrimaryButton
-                  title="Unlock Vault"
+                  title={cooldownSeconds > 0 ? `Locked (${cooldownSeconds}s)` : 'Unlock Vault'}
                   onPress={handlePasswordUnlock}
                   loading={loading}
-                  icon={<Ionicons name="lock-open-outline" size={18} color="#fff" />}
+                  disabled={cooldownSeconds > 0}
+                  icon={<Ionicons name={cooldownSeconds > 0 ? 'time-outline' : 'lock-open-outline'} size={18} color="#fff" />}
                 />
 
                 {hasBioKey && biometricAvailable && !isExplicitLogout && (

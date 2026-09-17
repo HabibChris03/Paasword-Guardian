@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import { useVaultContext } from '../../src/context/vault-context';
 import { Typography, Spacing, Radius, Shadows, CategoryColors, CategoryIcons, getStrengthColor } from '../../src/constants/theme';
 import { formatDate, timeAgo, faviconUrl, extractDomain } from '../../src/utils/format';
 import type { Credential, DecryptedCredential } from '../../src/types/models';
+import TotpService from '../../src/crypto/totp-service';
 
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import SecondaryButton from '../../components/ui/SecondaryButton';
@@ -28,10 +29,13 @@ export default function CredentialDetailScreen() {
   const [credential, setCredential] = useState<Credential | null>(null);
   const [decryptedPassword, setDecryptedPassword] = useState<string>('');
   const [decryptedNotes, setDecryptedNotes] = useState<string>('');
+  const [totpSecret, setTotpSecret] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState<string>('');
+  const [totpRemaining, setTotpRemaining] = useState<number>(30);
   const [loading, setLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [clipboardToast, setClipboardToast] = useState<{ visible: boolean; type: 'username' | 'password'; timeLeft: number }>({
+  const [clipboardToast, setClipboardToast] = useState<{ visible: boolean; type: 'username' | 'password' | 'totp'; timeLeft: number }>({
     visible: false,
     type: 'username',
     timeLeft: 0,
@@ -59,6 +63,12 @@ export default function CredentialDetailScreen() {
         if (dec) {
           setDecryptedPassword(dec.password);
           setDecryptedNotes(dec.notes || '');
+          if (dec.totpSecret) {
+            setTotpSecret(dec.totpSecret);
+            const code = TotpService.generateCode(dec.totpSecret);
+            if (code) setTotpCode(code);
+            setTotpRemaining(TotpService.getRemainingSeconds());
+          }
         }
 
         setLoading(false);
@@ -81,6 +91,17 @@ export default function CredentialDetailScreen() {
       clearTimeouts();
     };
   }, [loadCredential]);
+
+  useEffect(() => {
+    if (!totpSecret) return;
+    const interval = setInterval(() => {
+      const remaining = TotpService.getRemainingSeconds();
+      setTotpRemaining(remaining);
+      const code = TotpService.generateCode(totpSecret);
+      if (code) setTotpCode(code);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [totpSecret]);
 
   const handleToggleFavorite = async () => {
     if (!credential) return;
@@ -128,7 +149,7 @@ export default function CredentialDetailScreen() {
     }
   };
 
-  const copyToClipboard = async (text: string, type: 'username' | 'password') => {
+  const copyToClipboard = async (text: string, type: 'username' | 'password' | 'totp') => {
     if (type === 'password' && !showPassword) {
       // Also require fingerprint if copying password while it is hidden
       const bioAvailable = await AuthService.isBiometricAvailable();
@@ -306,6 +327,51 @@ export default function CredentialDetailScreen() {
           )}
         </View>
 
+        {/* Two-Factor Authenticator (2FA / TOTP) Card */}
+        {totpSecret && totpCode ? (
+          <View style={[styles.sectionCard, { backgroundColor: C.surface, borderColor: C.border }, Shadows.sm]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+                <Ionicons name="shield-checkmark" size={18} color={C.primary} />
+                <Text style={[styles.sectionTitle, { color: C.text, marginBottom: 0 }]}>Two-Factor Verification (2FA)</Text>
+              </View>
+              <View style={{
+                backgroundColor: totpRemaining <= 5 ? C.dangerLight : C.primaryMuted,
+                paddingHorizontal: Spacing.sm,
+                paddingVertical: 2,
+                borderRadius: Radius.full,
+              }}>
+                <Text style={{
+                  fontSize: Typography.size.xs,
+                  fontWeight: Typography.weight.bold,
+                  color: totpRemaining <= 5 ? C.danger : C.primary,
+                }}>
+                  {totpRemaining}s
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{
+                fontSize: 28,
+                fontWeight: Typography.weight.extrabold,
+                letterSpacing: 3,
+                color: C.text,
+                fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+              }} selectable>
+                {TotpService.formatCode(totpCode)}
+              </Text>
+              <TouchableOpacity
+                style={[styles.copyButton, { backgroundColor: C.surfaceSecondary }]}
+                onPress={() => copyToClipboard(totpCode, 'totp')}
+                accessibilityLabel="Copy 2FA code"
+              >
+                <Ionicons name="copy-outline" size={18} color={C.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+
         {/* Secure Notes Section */}
         {decryptedNotes ? (
           <View style={[styles.sectionCard, { backgroundColor: C.surface, borderColor: C.border }, Shadows.sm]}>
@@ -368,7 +434,7 @@ export default function CredentialDetailScreen() {
         <View style={[styles.toastContainer, { backgroundColor: C.text }, Shadows.md]}>
           <Ionicons name="clipboard" size={18} color={C.surface} />
           <Text style={[styles.toastText, { color: C.surface }]}>
-            {clipboardToast.type === 'username' ? 'Username' : 'Password'} copied! Clears in {clipboardToast.timeLeft}s
+            {clipboardToast.type === 'username' ? 'Username' : clipboardToast.type === 'password' ? 'Password' : '2FA Code'} copied! Clears in {clipboardToast.timeLeft}s
           </Text>
         </View>
       )}

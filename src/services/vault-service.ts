@@ -230,8 +230,12 @@ export const VaultService = {
         ? (CryptoService.decryptField(credential.encryptedNotes, vaultKey) ?? '')
         : '';
 
-      const { encryptedPassword, encryptedNotes, ...rest } = credential;
-      return { ...rest, password, notes };
+      const totpSecret = credential.encryptedTotpSecret
+        ? (CryptoService.decryptField(credential.encryptedTotpSecret, vaultKey) ?? undefined)
+        : undefined;
+
+      const { encryptedPassword, encryptedNotes, encryptedTotpSecret, ...rest } = credential;
+      return { ...rest, password, notes, totpSecret };
     } catch {
       return null;
     }

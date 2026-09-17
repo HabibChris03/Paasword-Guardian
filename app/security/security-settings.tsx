@@ -40,6 +40,21 @@ export default function SecuritySettingsScreen() {
     Alert.alert('Saved', 'Security settings updated.');
   };
 
+  const handleToggleAutoWipe = (enable: boolean) => {
+    if (enable) {
+      Alert.alert(
+        'Enable Emergency Auto-Wipe?',
+        'Warning: If 10 consecutive incorrect master password attempts are made, your vault and all stored passwords will be permanently deleted from this device.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Enable', style: 'destructive', onPress: () => updateSettings({ autoWipeOnFailedAttempts: true }) },
+        ]
+      );
+    } else {
+      updateSettings({ autoWipeOnFailedAttempts: false });
+    }
+  };
+
   if (!settings) return null;
 
   return (
@@ -111,10 +126,42 @@ export default function SecuritySettingsScreen() {
           <Text style={[styles.sectionTitle, { color: C.text }]}>Security Options</Text>
           <View style={[styles.optionGroup, { borderColor: C.border, backgroundColor: C.surface }]}>
             {[
-              { label: 'Lock on Background', key: 'lockOnBackground' as const, desc: 'Lock vault when app goes to background' },
-              { label: 'Breach Monitoring', key: 'breachMonitoringEnabled' as const, desc: 'Check if your accounts appear in data breaches' },
-              { label: 'Security Notifications', key: 'securityNotificationsEnabled' as const, desc: 'Receive alerts for security events' },
-            ].map((item, i) => (
+              {
+                label: 'Lock on Background',
+                key: 'lockOnBackground' as const,
+                desc: 'Lock vault when app moves to background',
+                value: settings.lockOnBackground,
+                onChange: (v: boolean) => updateSettings({ lockOnBackground: v }),
+              },
+              {
+                label: 'Screen & App Switcher Privacy',
+                key: 'screenshotProtection' as const,
+                desc: 'Shield screen in multitasking switcher & block captures',
+                value: settings.screenshotProtection,
+                onChange: (v: boolean) => updateSettings({ screenshotProtection: v }),
+              },
+              {
+                label: 'Breach Monitoring',
+                key: 'breachMonitoringEnabled' as const,
+                desc: 'Check if your accounts appear in data breaches',
+                value: settings.breachMonitoringEnabled,
+                onChange: (v: boolean) => updateSettings({ breachMonitoringEnabled: v }),
+              },
+              {
+                label: 'Security Notifications',
+                key: 'securityNotificationsEnabled' as const,
+                desc: 'Receive alerts for security events',
+                value: settings.securityNotificationsEnabled,
+                onChange: (v: boolean) => updateSettings({ securityNotificationsEnabled: v }),
+              },
+              {
+                label: 'Emergency Auto-Wipe',
+                key: 'autoWipeOnFailedAttempts' as const,
+                desc: 'Erase vault after 10 consecutive failed password attempts',
+                value: settings.autoWipeOnFailedAttempts ?? false,
+                onChange: handleToggleAutoWipe,
+              },
+            ].map((item, i, arr) => (
               <React.Fragment key={item.key}>
                 <View style={styles.toggleRow}>
                   <View style={styles.toggleText}>
@@ -122,13 +169,13 @@ export default function SecuritySettingsScreen() {
                     <Text style={[styles.optionDesc, { color: C.textTertiary }]}>{item.desc}</Text>
                   </View>
                   <Switch
-                    value={settings[item.key] as boolean}
-                    onValueChange={v => updateSettings({ [item.key]: v })}
+                    value={item.value}
+                    onValueChange={item.onChange}
                     trackColor={{ true: C.primary, false: C.border }}
                     thumbColor="#fff"
                   />
                 </View>
-                {i < 2 && <View style={[styles.divider, { backgroundColor: C.divider }]} />}
+                {i < arr.length - 1 && <View style={[styles.divider, { backgroundColor: C.divider }]} />}
               </React.Fragment>
             ))}
           </View>
