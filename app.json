@@ -9,9 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.habibchris.passwordguardian"
     },
     "android": {
+      "package": "com.habibchris.passwordguardian",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -49,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d97d84e5-6fe6-43de-8d2b-66130cbf8682"
+      }
+    },
+    "owner": "habib_chris"
   }
 }
