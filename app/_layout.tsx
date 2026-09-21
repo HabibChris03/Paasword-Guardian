@@ -11,6 +11,7 @@ import {
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 import * as SplashScreen from 'expo-splash-screen';
+import * as ScreenCapture from 'expo-screen-capture';
 import { VaultProvider } from '../src/context/vault-context';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,6 +34,7 @@ if (TextInput.defaultProps == null) {
 TextInput.defaultProps.style = { fontFamily: 'Poppins_400Regular' };
 
 export default function RootLayout() {
+  ScreenCapture.usePreventScreenCapture();
   const scheme = useColorScheme();
 
   const [fontsLoaded, fontError] = useFonts({

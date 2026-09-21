@@ -173,7 +173,7 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="help-circle-outline"
             label="Help & Security Info"
-            onPress={() => router.push('/help/index')}
+            onPress={() => router.push('/help')}
           />
           <View style={[styles.divider, { backgroundColor: C.divider }]} />
           <SettingsRow

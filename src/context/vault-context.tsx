@@ -17,6 +17,7 @@ import { AuthService } from '../services/auth-service';
 import { VaultService } from '../services/vault-service';
 import { NotificationService } from '../services/notification-service';
 import { Colors } from '../constants/theme';
+import * as ScreenCapture from 'expo-screen-capture';
 
 interface VaultContextValue {
   vaultState:  VaultState;
@@ -53,6 +54,16 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refreshSettings();
   }, [refreshSettings]);
+
+  // Block screenshots and screen recordings throughout the app
+  useEffect(() => {
+    const isProtectionEnabled = settings?.screenshotProtection ?? true;
+    if (isProtectionEnabled) {
+      ScreenCapture.preventScreenCaptureAsync().catch(() => {});
+    } else {
+      ScreenCapture.allowScreenCaptureAsync().catch(() => {});
+    }
+  }, [settings?.screenshotProtection]);
 
   const unlock = useCallback((key: string) => {
     vaultKeyRef.current = key;

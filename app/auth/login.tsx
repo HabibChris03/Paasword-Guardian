@@ -289,7 +289,7 @@ export default function LoginScreen() {
           {/* Forgot / help link */}
           <TouchableOpacity
             style={styles.forgotBtn}
-            onPress={() => router.push('/help/index')}
+            onPress={() => router.push('/help' as any)}
             accessibilityLabel="Help"
           >
             <Text style={[styles.forgotText, { color: C.textTertiary }]}>

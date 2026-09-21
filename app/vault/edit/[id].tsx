@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../../hooks/useTheme';
 import { VaultService } from '../../../src/services/vault-service';
+import { AuthService } from '../../../src/services/auth-service';
 import { useVaultContext } from '../../../src/context/vault-context';
 import { Typography, Spacing, Radius, Shadows, CategoryColors, CategoryIcons } from '../../../src/constants/theme';
 import { validateCredentialForm, type CredentialValidationErrors } from '../../../src/utils/validation';
@@ -31,12 +32,13 @@ const CATEGORIES: { id: CredentialCategory; label: string }[] = [
 
 export default function EditCredentialScreen() {
   const router = useRouter();
-  const { id, generatedPassword } = useLocalSearchParams<{ id: string; generatedPassword?: string }>();
+  const { id, generatedPassword, verified } = useLocalSearchParams<{ id: string; generatedPassword?: string; verified?: string }>();
   const { C } = useTheme();
   const { vaultKey } = useVaultContext();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isBiometricVerified, setIsBiometricVerified] = useState(verified === 'true');
   const [credential, setCredential] = useState<Credential | null>(null);
 
   const [title, setTitle] = useState('');
@@ -54,6 +56,22 @@ export default function EditCredentialScreen() {
     if (!id || !vaultKey) return;
     try {
       setLoading(true);
+
+      // Require biometric authentication before editing the password
+      if (!isBiometricVerified && verified !== 'true') {
+        const bioAvailable = await AuthService.isBiometricAvailable();
+        if (bioAvailable) {
+          const authenticated = await AuthService.authenticateWithBiometrics(
+            'Scan your fingerprint to edit this password'
+          );
+          if (!authenticated) {
+            router.back();
+            return;
+          }
+          setIsBiometricVerified(true);
+        }
+      }
+
       const cred = await VaultService.getCredential(id);
       if (cred) {
         setCredential(cred);
@@ -78,7 +96,7 @@ export default function EditCredentialScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, vaultKey, router]);
+  }, [id, vaultKey, router, isBiometricVerified, verified]);
 
   useEffect(() => {
     loadCredential();

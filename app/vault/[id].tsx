@@ -125,6 +125,23 @@ export default function CredentialDetailScreen() {
     }
   };
 
+  const handleEditPress = async () => {
+    if (!credential) return;
+    const bioAvailable = await AuthService.isBiometricAvailable();
+    if (bioAvailable) {
+      const authenticated = await AuthService.authenticateWithBiometrics(
+        'Scan your fingerprint to edit this password'
+      );
+      if (!authenticated) {
+        return;
+      }
+    }
+    router.push({
+      pathname: `/vault/edit/${credential.id}` as any,
+      params: { verified: 'true' },
+    });
+  };
+
   const togglePasswordVisibility = async () => {
     if (!showPassword) {
       // User wants to view/reveal the password: demand fingerprint
@@ -419,7 +436,7 @@ export default function CredentialDetailScreen() {
         <View style={styles.actionButtons}>
           <SecondaryButton
             title="Edit Password"
-            onPress={() => router.push(`/vault/edit/${credential.id}` as any)}
+            onPress={handleEditPress}
             icon={<Ionicons name="create-outline" size={18} color={C.text} />}
           />
           <DangerButton
