@@ -1,0 +1,55 @@
+﻿================================================================================
+              PASSWORD GUARDIAN - QUIZ VIDEO SECTION TITLES (40)
+================================================================================
+
+--- CATEGORY 1: PASSWORD STRENGTH & CRACKING CHALLENGES ---
+01. How Fast Can a Hacker Crack Your Password? (Take the Quiz!)
+02. Is Your Password in the Top 10 Most Hacked? Test Yourself
+03. The 10-Second Password Security Test: Pass or Fail?
+04. True or False: Adding a Number to Your Password Makes It Unhackable?
+05. Can You Guess Which of These 3 Passwords Takes 100 Years to Crack?
+06. Would You Survive a Brute-Force Attack? Find Out Now!
+07. The Password Weakness Quiz: How Vulnerable Are You?
+08. Passphrase vs. Complex Password: Which One Wins? (Quiz Challenge)
+
+--- CATEGORY 2: SPOT THE PHISHING SCAM & FAKE WEBSITES ---
+09. Can You Spot the Fake Login Page? Real vs. Phishing Quiz
+10. Only 5% of People Catch All 3 Red Flags in This Email! Can You?
+11. Urgent Security Alert: Real Email or Hacker Trap? (Test Your Eye)
+12. The SMS Phishing Challenge: Would You Click This Link?
+13. Spot the Imposter: Netflix, Apple, or Cybercriminal?
+14. How Good Are You at Spotting Fake URLs? (5-Question Test)
+15. Bank Scam or Legit Notification? Test Your Scam Radar
+16. The QR Code Trap: Can Scanning This Drain Your Account?
+
+--- CATEGORY 3: SOCIAL ENGINEERING & HACKER TACTICS ---
+17. Would You Fall for This Classic Social Engineering Attack?
+18. Answer These 4 Questions and I'll Tell You if You Can Be Hacked
+19. How Much Personal Info Did You Accidentally Leak Online? (Quiz)
+20. Would You Give Away Your Password for a Free Coffee? (The Street Test)
+21. Could a Hacker Reset Your Account Using Your Social Media?
+22. The Security Question Quiz: Are Your "Mother's Maiden Name" Answers Safe?
+23. Tech Support Scam or Real Technician? Make the Call!
+24. Hacker Mindset Quiz: Can You Predict the Attacker's Next Move?
+
+--- CATEGORY 4: 2FA, BIOMETRICS & ENCRYPTION ---
+25. SMS 2FA vs. Authenticator App: Do You Know the Dangerous Difference?
+26. Biometric Security Quiz: Can Someone Unlock Your Phone While You Sleep?
+27. The 2-Factor Authentication Test: Is Your Account Truly Safe?
+28. Can Face ID Be Tricked by a Photo or 3D Mask? (Fact or Myth)
+29. Zero-Knowledge Encryption Explained in 60 Seconds: Pop Quiz!
+30. What Happens if You Lose Your Master Key? (Emergency Vault Quiz)
+31. The 2FA Recovery Code Challenge: Where Should You NEVER Store Them?
+32. SIM Swapping 101: Could a Hacker Steal Your Phone Number Today?
+
+--- CATEGORY 5: DIGITAL HYGIENE & EVERYDAY CYBER TRAPS ---
+33. Free Airport Wi-Fi: Safe to Check Your Bank or Instant Danger?
+34. The Public Charger Trap: What is "Juice Jacking"? (Take the Quiz)
+35. How Clean is Your Digital Footprint? (Rapid-Fire Quiz)
+36. Did Your Email Leak in the Latest Data Breach? Test Your Knowledge
+37. Autofill in Browsers: Convenient Feature or Security Nightmare?
+38. What Should You Do First After Your Account is Hacked? (Scenario Quiz)
+39. The App Permission Audit: Why Does a Flashlight Need Your Location?
+40. Ultimate Cybersecurity IQ Test: Are You a Novice or a Cyber Guardian?
+
+================================================================================
